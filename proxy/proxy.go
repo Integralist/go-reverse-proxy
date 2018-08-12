@@ -145,16 +145,7 @@ func GenerateProxy(conf routing.Config) http.Handler {
 				}
 			}
 
-			// remove named capture groups from query
-			for k := range req.URL.Query() {
-				isCaptureGroup := strings.HasPrefix(k, "ncg_")
-
-				if isCaptureGroup {
-					originalQuery := req.URL.Query()
-					originalQuery.Del(k)
-					req.URL.RawQuery = originalQuery.Encode()
-				}
-			}
+			cleanUpQueryString(req)
 		},
 		Transport: &http.Transport{
 			Dial: (&net.Dialer{
@@ -174,4 +165,21 @@ func GenerateProxy(conf routing.Config) http.Handler {
 	}
 
 	return proxy
+}
+
+// cleanUpQueryString removes any named capture groups from the query string
+// that were added by our routing logic. The capture groups were added to the
+// query string so that the final request handler could easily parse the values
+// and interpolate them into a modified request path, but after that they are
+// not useful to either the client nor the proxied upstream.
+func cleanUpQueryString(req *http.Request) {
+	for k := range req.URL.Query() {
+		isCaptureGroup := strings.HasPrefix(k, "ncg_")
+
+		if isCaptureGroup {
+			originalQuery := req.URL.Query()
+			originalQuery.Del(k)
+			req.URL.RawQuery = originalQuery.Encode()
+		}
+	}
 }
