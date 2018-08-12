@@ -50,99 +50,15 @@ func GenerateProxy(conf routing.Config) http.Handler {
 			req.URL.Host = conf.Upstream.Host
 
 			if conf.ModifyPath != "" {
-				if strings.Contains(conf.ModifyPath, "$") {
-					req.URL.Path = conf.ModifyPath
-
-					for k, v := range req.URL.Query() {
-						// req.URL.Query() = map[foo:[ncg_foovalue] bar:[ncg_barvalue]]
-						isCaptureGroup := strings.HasPrefix(k, "ncg_")
-
-						if isCaptureGroup {
-							// interpolate query param value into modified request path
-							cleanKeyPrefix := strings.Replace(k, "ncg_", "", 1)
-							r := strings.NewReplacer("$", "", cleanKeyPrefix, v[0])
-							req.URL.Path = r.Replace(req.URL.Path)
-						}
-					}
-				} else {
-					req.URL.Path = conf.ModifyPath
-				}
-				req.Header.Add("X-Router-Upstream-OriginalPathModified", req.URL.Path)
+				modifyPath(req, conf.ModifyPath)
 			}
 
 			if conf.Override.Header != "" && conf.Override.Match != "" {
-				if req.Header.Get(conf.Override.Header) == conf.Override.Match {
-					if conf.Override.ModifyPath != "" {
-						// TODO: duplicated logic, needs moving into a separate function
-						if strings.Contains(conf.Override.ModifyPath, "$") {
-							req.URL.Path = conf.Override.ModifyPath
-
-							for k, v := range req.URL.Query() {
-								// req.URL.Query() = map[foo:[ncg_foovalue] bar:[ncg_barvalue]]
-								isCaptureGroup := strings.HasPrefix(k, "ncg_")
-
-								if isCaptureGroup {
-									// interpolate query param value into modified request path
-									cleanKeyPrefix := strings.Replace(k, "ncg_", "", 1)
-									r := strings.NewReplacer("$", "", cleanKeyPrefix, v[0])
-									req.URL.Path = r.Replace(req.URL.Path)
-								}
-							}
-						} else {
-							req.URL.Path = conf.Override.ModifyPath
-						}
-
-						req.Header.Add("X-Router-Upstream-OverridePath", req.URL.Path)
-					}
-
-					if conf.Override.Upstream != nil && conf.Override.Upstream.Host != "" && conf.Override.Upstream.Name != "" {
-						req.Host = conf.Override.Upstream.Host
-						req.URL.Host = conf.Override.Upstream.Host
-						req.Header.Add("X-Router-Upstream-Override", conf.Override.Upstream.Name)
-						req.Header.Add("X-Router-Upstream-OverrideHost", conf.Override.Upstream.Host)
-					}
-				}
+				overrideHeader(req, conf.Override)
 			}
 
 			if conf.Override.Query != "" && conf.Override.Match != "" {
-				pattern := regexp.MustCompile(conf.Override.Match)
-				param := req.URL.Query().Get(conf.Override.Query)
-
-				if conf.Override.MatchType == "regex" {
-					match := pattern.MatchString(param)
-
-					if match {
-						if conf.Override.Upstream != nil {
-							req.Host = conf.Override.Upstream.Host
-							req.URL.Host = conf.Override.Upstream.Host
-							req.Header.Add("X-Router-Upstream-OverrideHost", req.URL.Host)
-						}
-						if conf.Override.ModifyPath != "" {
-							newpath := []byte{}
-							queryparam := []byte(param)
-							template := []byte(conf.Override.ModifyPath)
-
-							for _, submatches := range pattern.FindAllSubmatchIndex(queryparam, -1) {
-								newpath = pattern.Expand(newpath, template, queryparam, submatches)
-							}
-
-							req.URL.Path = string(newpath)
-							req.Header.Add("X-Router-Upstream-OverridePath", req.URL.Path)
-						}
-					}
-				} else {
-					if param == conf.Override.Match {
-						if conf.Override.Upstream != nil {
-							req.Host = conf.Override.Upstream.Host
-							req.URL.Host = conf.Override.Upstream.Host
-							req.Header.Add("X-Router-Upstream-OverrideHost", req.URL.Host)
-						}
-						if conf.Override.ModifyPath != "" {
-							req.URL.Path = conf.Override.ModifyPath
-							req.Header.Add("X-Router-Upstream-OverridePath", req.URL.Path)
-						}
-					}
-				}
+				overrideQuery(req, conf.Override)
 			}
 
 			cleanUpQueryString(req)
@@ -165,6 +81,104 @@ func GenerateProxy(conf routing.Config) http.Handler {
 	}
 
 	return proxy
+}
+
+func modifyPath(req *http.Request, modifyPath string) {
+	if strings.Contains(modifyPath, "$") {
+		req.URL.Path = modifyPath
+
+		for k, v := range req.URL.Query() {
+			// req.URL.Query() = map[foo:[ncg_foovalue] bar:[ncg_barvalue]]
+			isCaptureGroup := strings.HasPrefix(k, "ncg_")
+
+			if isCaptureGroup {
+				// interpolate query param value into modified request path
+				cleanKeyPrefix := strings.Replace(k, "ncg_", "", 1)
+				r := strings.NewReplacer("$", "", cleanKeyPrefix, v[0])
+				req.URL.Path = r.Replace(req.URL.Path)
+			}
+		}
+	} else {
+		req.URL.Path = modifyPath
+	}
+
+	req.Header.Add("X-Router-Upstream-OriginalPathModified", req.URL.Path)
+}
+
+func overrideHeader(req *http.Request, override routing.Override) {
+	if req.Header.Get(override.Header) == override.Match {
+		if override.ModifyPath != "" {
+			// TODO: duplicated logic with modifyPath function
+			if strings.Contains(override.ModifyPath, "$") {
+				req.URL.Path = override.ModifyPath
+
+				for k, v := range req.URL.Query() {
+					// req.URL.Query() = map[foo:[ncg_foovalue] bar:[ncg_barvalue]]
+					isCaptureGroup := strings.HasPrefix(k, "ncg_")
+
+					if isCaptureGroup {
+						// interpolate query param value into modified request path
+						cleanKeyPrefix := strings.Replace(k, "ncg_", "", 1)
+						r := strings.NewReplacer("$", "", cleanKeyPrefix, v[0])
+						req.URL.Path = r.Replace(req.URL.Path)
+					}
+				}
+			} else {
+				req.URL.Path = override.ModifyPath
+			}
+
+			req.Header.Add("X-Router-Upstream-OverridePath", req.URL.Path)
+		}
+
+		if override.Upstream != nil && override.Upstream.Host != "" && override.Upstream.Name != "" {
+			req.Host = override.Upstream.Host
+			req.URL.Host = override.Upstream.Host
+			req.Header.Add("X-Router-Upstream-Override", override.Upstream.Name)
+			req.Header.Add("X-Router-Upstream-OverrideHost", override.Upstream.Host)
+		}
+	}
+}
+
+func overrideQuery(req *http.Request, override routing.Override) {
+	pattern := regexp.MustCompile(override.Match)
+	param := req.URL.Query().Get(override.Query)
+
+	if override.MatchType == "regex" {
+		match := pattern.MatchString(param)
+
+		if match {
+			if override.Upstream != nil {
+				req.Host = override.Upstream.Host
+				req.URL.Host = override.Upstream.Host
+				req.Header.Add("X-Router-Upstream-OverrideHost", req.URL.Host)
+			}
+			if override.ModifyPath != "" {
+				newpath := []byte{}
+				queryparam := []byte(param)
+				template := []byte(override.ModifyPath)
+
+				for _, submatches := range pattern.FindAllSubmatchIndex(queryparam, -1) {
+					newpath = pattern.Expand(newpath, template, queryparam, submatches)
+				}
+
+				req.URL.Path = string(newpath)
+				req.Header.Add("X-Router-Upstream-OverridePath", req.URL.Path)
+			}
+		}
+	} else {
+		if param == override.Match {
+			if override.Upstream != nil {
+				req.Host = override.Upstream.Host
+				req.URL.Host = override.Upstream.Host
+				req.Header.Add("X-Router-Upstream-OverrideHost", req.URL.Host)
+			}
+			if override.ModifyPath != "" {
+				req.URL.Path = override.ModifyPath
+				req.Header.Add("X-Router-Upstream-OverridePath", req.URL.Path)
+			}
+		}
+	}
+
 }
 
 // cleanUpQueryString removes any named capture groups from the query string
