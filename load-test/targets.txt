@@ -1,0 +1,26 @@
+GET http://localhost:9001/anything/standard
+GET http://localhost:9001/anything/foo
+GET http://localhost:9001/anything/bar
+GET http://localhost:9001/anything/foobar
+
+GET http://localhost:9001/anything/foobar
+X-BF-Testing: integralist
+
+GET http://localhost:9001/double-checks
+
+GET http://localhost:9001/double-checks
+X-BF-Testing: integralist
+
+GET http://localhost:9001/anything/integralist
+
+GET http://localhost:9001/anything/integralist
+X-BF-Testing: integralist
+
+GET http://localhost:9001/about?s=integralist
+
+GET http://localhost:9001/anything/querytest
+GET http://localhost:9001/anything/querytest?s=integralist123
+GET http://localhost:9001/anything/querytest?s=integralist666
+GET http://localhost:9001/foo123
+GET http://localhost:9001/foo666
+GET http://localhost:9001/beepboop

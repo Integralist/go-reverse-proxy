@@ -224,6 +224,22 @@ The first request will be proxied straight through to the specified upstream wit
 
 If the relevant query parameter is specified, then the second and third requests will have their path modified to include the captured information: `/anything/newthing123` and `/anything/newthing456`. 
 
+## Response Headers
+
+We set the following response headers (not all will be set depending on the configuration):
+
+```
+X-Forwarded-Host
+X-Origin-Host
+X-Router-Upstream
+X-Router-Upstream-OriginalHost
+X-Router-Upstream-OriginalPath
+X-Router-Upstream-OriginalPathModified
+X-Router-Upstream-Override
+X-Router-Upstream-OverrideHost
+X-Router-Upstream-OverridePath
+```
+
 ## Usage
 
 ```
@@ -242,24 +258,29 @@ curl -v http://localhost:9001/some/path/you/configured
 make test
 ```
 
-## Response Headers
+## Load Test
 
-We set the following response headers (not all will be set depending on the configuration):
+We use [`vegeta`](https://github.com/tsenart/vegeta) for load testing, so make sure you have that installed.
 
 ```
-X-Forwarded-Host
-X-Origin-Host
-X-Router-Upstream
-X-Router-Upstream-OriginalHost
-X-Router-Upstream-OriginalPath
-X-Router-Upstream-OriginalPathModified
-X-Router-Upstream-Override
-X-Router-Upstream-OverrideHost
-X-Router-Upstream-OverridePath
+make stress
+```
+
+Example output:
+
+```
+Requests      [total, rate]            1500, 50.03
+Duration      [total, attack, wait]    30.11237994s, 29.982166788s, 130.213152ms
+Latencies     [mean, 50, 95, 99, max]  154.522948ms, 96.76258ms, 358.770472ms, 1.076826656s, 2.954136535s
+Bytes In      [total, mean]            2039772, 1359.85
+Bytes Out     [total, mean]            0, 0.00
+Success       [ratio]                  100.00%
+Status Codes  [code:count]             200:1500
+Error Set:
 ```
 
 ## TODO
 
-- Setup some load testing
+- Verify if DNS caching (or request memoization) would affect latency results?
 - Review 301 redirect behaviour to be sure we don't need to handle that differently.
 - Flesh out some unit tests (not just integration testing)

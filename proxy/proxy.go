@@ -1,6 +1,7 @@
 package proxy
 
 import (
+	"log"
 	"net"
 	"net/http"
 	"net/http/httputil"
@@ -62,6 +63,8 @@ func GenerateProxy(conf routing.Config) http.Handler {
 			}
 
 			cleanUpQueryString(req)
+
+			log.Printf("request: %s\n", req.URL)
 		},
 		Transport: &http.Transport{
 			Dial: (&net.Dialer{
