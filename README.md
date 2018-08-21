@@ -226,10 +226,20 @@ If the relevant query parameter is specified, then the second and third requests
 
 ## Usage
 
-Application listens on port `9001`.
+```
+make run
+```
+
+> Note: the application listens on port `9001`.
 
 ```
 curl -v http://localhost:9001/some/path/you/configured
+```
+
+## Tests
+
+```
+make test
 ```
 
 ## Response Headers

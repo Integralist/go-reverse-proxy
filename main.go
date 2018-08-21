@@ -9,6 +9,8 @@ import (
 )
 
 func main() {
+	log.Print("Application Starting up on port 9001")
+
 	router := &routing.Handler{}
 
 	for _, conf := range routing.Configuration {
