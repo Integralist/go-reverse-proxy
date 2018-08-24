@@ -145,11 +145,15 @@ func overrideHeader(req *http.Request, override routing.Override) {
 }
 
 func overrideQuery(req *http.Request, override routing.Override) {
-	// TODO: figure out how to precompile this rather than at runtime
-	pattern := regexp.MustCompile(override.Match)
 	param := req.URL.Query().Get(override.Query)
 
 	if override.MatchType == "regex" {
+		// TODO: figure out how to precompile this rather than at runtime
+		pattern, err := regexp.Compile(override.Match)
+		if err != nil {
+			return
+		}
+
 		match := pattern.MatchString(param)
 
 		if match {
@@ -184,7 +188,6 @@ func overrideQuery(req *http.Request, override routing.Override) {
 			}
 		}
 	}
-
 }
 
 // cleanUpQueryString removes any named capture groups from the query string
