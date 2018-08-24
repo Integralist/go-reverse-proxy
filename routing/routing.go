@@ -7,6 +7,8 @@ import (
 	"regexp"
 )
 
+var captureGroupsPattern = regexp.MustCompile("P<([^>]+)>")
+
 type route struct {
 	pattern *regexp.Regexp
 	handler http.Handler
@@ -20,6 +22,7 @@ type Handler struct {
 }
 
 // HandleFunc appends a new route and coerces the given function into a HandlerFunc
+// MustCompile allows this service to fail fast when provided invalid regex config
 func (h *Handler) HandleFunc(config Config, handler func(http.ResponseWriter, *http.Request)) {
 	h.routes = append(h.routes, &route{
 		pattern: regexp.MustCompile(config.Path),
@@ -39,7 +42,6 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		pathMatchAndCaptureGroup := route.pattern.FindStringSubmatch(r.URL.Path)
 
 		if len(pathMatchAndCaptureGroup) > 0 {
-			captureGroupsPattern := regexp.MustCompile("P<([^>]+)>")
 			captureGroups := captureGroupsPattern.FindAllStringSubmatch(route.config.Path, -1)
 
 			if len(captureGroups) > 0 {

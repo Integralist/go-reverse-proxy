@@ -145,6 +145,7 @@ func overrideHeader(req *http.Request, override routing.Override) {
 }
 
 func overrideQuery(req *http.Request, override routing.Override) {
+	// TODO: figure out how to precompile this rather than at runtime
 	pattern := regexp.MustCompile(override.Match)
 	param := req.URL.Query().Get(override.Query)
 
