@@ -1,5 +1,5 @@
 test:
-	go test -v ./...
+	go test -v -failfast ./...
 
 run:
 	go run main.go

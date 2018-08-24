@@ -70,7 +70,7 @@ Both requests will be proxied straight through to the specified upstream without
 Config{
   Path:       `/(?P<cap>foo\w{3})`,
   Upstream:   upstreams.HTTPBin,
-  ModifyPath: "/anything/$cap",
+  ModifyPath: "/anything/${cap}",
 }
 ```
 
@@ -94,7 +94,7 @@ Config{
   Override: Override{
     Header:     "X-BF-Testing",
     Match:      "integralist",
-    ModifyPath: "/anything/newthing$cap",
+    ModifyPath: "/anything/newthing${cap}",
   },
 }
 ```
@@ -118,11 +118,11 @@ If the relevant request header is specified, then the request will be proxied th
 Config{
   Path:       "/(?P<cap>double-checks)$",
   Upstream:   upstreams.HTTPBin,
-  ModifyPath: "/anything/toplevel-modified-$cap",
+  ModifyPath: "/anything/toplevel-modified-${cap}",
   Override: Override{
     Header:     "X-BF-Testing",
     Match:      "integralist",
-    ModifyPath: "/anything/override-modified-$cap",
+    ModifyPath: "/anything/override-modified-${cap}",
   },
 }
 ```
@@ -207,7 +207,7 @@ Config{
     Query:      "s",
     Match:      `integralist(?P<cap>\d{1,3})$`,
     MatchType:  "regex",
-    ModifyPath: "/anything/newthing$cap",
+    ModifyPath: "/anything/newthing${cap}",
   },
 }
 ```

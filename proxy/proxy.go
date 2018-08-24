@@ -97,7 +97,8 @@ func modifyPath(req *http.Request, modifyPath string) {
 			if isCaptureGroup {
 				// interpolate query param value into modified request path
 				cleanKeyPrefix := strings.Replace(k, "ncg_", "", 1)
-				r := strings.NewReplacer("$", "", cleanKeyPrefix, v[0])
+				// replace ${foo} with foo
+				r := strings.NewReplacer("$", "", "{", "", "}", "", cleanKeyPrefix, v[0])
 				req.URL.Path = r.Replace(req.URL.Path)
 			}
 		}
@@ -122,7 +123,8 @@ func overrideHeader(req *http.Request, override routing.Override) {
 					if isCaptureGroup {
 						// interpolate query param value into modified request path
 						cleanKeyPrefix := strings.Replace(k, "ncg_", "", 1)
-						r := strings.NewReplacer("$", "", cleanKeyPrefix, v[0])
+						// replace ${foo} with foo
+						r := strings.NewReplacer("$", "", "{", "", "}", "", cleanKeyPrefix, v[0])
 						req.URL.Path = r.Replace(req.URL.Path)
 					}
 				}
