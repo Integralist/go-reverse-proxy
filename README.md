@@ -281,6 +281,7 @@ Error Set:
 
 ## TODO
 
+- Look at implementing thread pool processing on a host or server basis.
 - Verify if DNS caching (or request memoization) would affect latency results?
 - Review 301 redirect behaviour to be sure we don't need to handle that differently.
 - Flesh out some unit tests (not just integration testing)
